@@ -236,8 +236,8 @@ class Game:
     def score(self):
         if self.exception is not None:
             return 0
-        # сумма всех достоинств всех карт
-        return sum(sum(range(1, max_card+1)) for max_card in self.played.values())
+        # сумма достоинств самых больших сыгранных карт
+        return sum(self.played.values())
                 
     def run(self):
         self.write_init_message() 
