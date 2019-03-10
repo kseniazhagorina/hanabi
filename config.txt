@@ -1,0 +1,2 @@
+python bots/trivial.py
+python bots/trivial.py
