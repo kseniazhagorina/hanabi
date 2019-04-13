@@ -8,6 +8,7 @@ import sys
 import codecs
 from datetime import datetime
 from threading import Thread
+from queue import Queue
 
 
 COLORS = ['white', 'red', 'yellow', 'green', 'blue']
@@ -16,6 +17,8 @@ COMMANDS = ['PLAY', 'FOLD', 'HINT']
 
 INITIAL_HINTS = 8
 MAX_ERRORS = 3
+
+DEBUG = True
 
 # Первое сообщение
 # Количество_игроков(N) Мой_номер(0..N-1) Количество_подсказок(H) Количество_жизней(L) Количество_карт_в_руке(P)
@@ -44,11 +47,18 @@ MAX_ERRORS = 3
 
 class Player:
     def __init__(self, command):
-        self.process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, bufsize=1, encoding='utf8')
+        self.process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1, encoding='utf8')
         self.hand = []
-    
+        self.stderr = Queue()
+        
+        def read_stderr():
+            for line in self.process.stderr:
+                self.stderr.put(line.strip())                
+        Thread(target=read_stderr, daemon=True).start()
+        
     def empty_hand(self):
         return all(card is None for card in self.hand)
+               
         
 class Game:
     def __init__(self, config):
@@ -136,7 +146,12 @@ class Game:
         if t.is_alive():
             raise Exception('Player {} timed out'.format(self.current_turn_player))
         return command[0]
-            
+    
+    def read_and_log_debug(self):
+        while not self.players[self.current_turn_player].stderr.empty():
+            line = self.players[self.current_turn_player].stderr.get()
+            if DEBUG:
+                self.log.write('DEBUG {} {}\n'.format(self.current_turn_player, line))
             
     def apply_command(self, command):
         parts = command.split()
@@ -238,6 +253,7 @@ class Game:
             return 0
         # сумма достоинств самых больших сыгранных карт
         return sum(self.played.values())
+              
                 
     def run(self):
         self.write_init_message() 
@@ -248,6 +264,7 @@ class Game:
                     continue
                 self.write_which_turn_message()
                 command = self.read_command()
+                self.read_and_log_debug()
                 turn, card = self.apply_command(command)
                 self.write_turn_message(turn)
                 self.write_get_card_message(card)
