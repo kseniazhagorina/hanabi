@@ -268,9 +268,18 @@ class Game:
         copy = [Possible(p) for p in self.players[player_to].possible]
         self.players[player_to].possible = copy
         self.hint(player_from, player_to, selected, hint)
-        diff = sum(len(p) for p in original) - sum(len(p) for p in copy)
+        
+        score = 0
+        for card, p_original, p_copy in zip(self.players[player_to].hand, original, copy):
+            if card is not None:
+                # насколько уменьшится количество вариантов у противника
+                diff = len(p_original) - len(p_copy)
+                # +20 очков если противник сможет сыграть карту
+                bonus = 20.0 * (diff > 0) * sum(self.played[card[0]] == card[1] - 1 for card in p_copy)/len(p_copy) 
+                score += diff + bonus
+
         self.players[player_to].possible = original
-        return diff        
+        return score
              
 def main():
 
