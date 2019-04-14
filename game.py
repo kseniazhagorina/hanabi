@@ -4,6 +4,7 @@
 import random
 import subprocess
 import traceback
+import os.path
 import sys
 import codecs
 from datetime import datetime
@@ -80,7 +81,9 @@ class Game:
             player.hand = [self.deck.pop() for _ in range(self.count_in_hand)]
         self.timeout_ms = 1000
         self.current_turn_player = random.choice(list(range(len(self.players))))
-        self.log = codecs.open(datetime.now().strftime('%Y%m%d-%H%M%S')+'.log', 'w+', 'utf-8')
+        logfile = os.path.join("logs", datetime.now().strftime('%Y%m%d-%H%M%S')+'.log')
+        os.makedirs(os.path.dirname(logfile), exist_ok=True)
+        self.log = codecs.open(logfile, 'w+', 'utf-8')
         self.exception = None
 
     def write_init_message(self):

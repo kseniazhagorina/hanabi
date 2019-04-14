@@ -1,0 +1,5 @@
+python bots/all_variants.py
+python bots/all_variants.py
+python bots/all_variants.py
+python bots/all_variants.py
+python bots/all_variants.py
