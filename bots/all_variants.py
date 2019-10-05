@@ -175,27 +175,22 @@ class Player:
 
         play = try_play()
         if play:
-            sys.stderr.write('play\n')
             return play
         
         up_hints = try_fold() if self.game.hints < len(self.game.players)/2 else None
         if up_hints:
-            sys.stderr.write('fold to up hints\n')
             return up_hints
             
         make_hint = try_hint() if self.game.hints > len(self.game.players) else None
         if make_hint:
-            sys.stderr.write('make_hint\n')
             return make_hint
             
         fold = try_fold()
         if fold:
-            sys.stderr.write('fold\n')
             return fold
             
         hint = try_hint() if self.game.hints > 0 else None
         if hint:
-            sys.stderr.write('hint\n')
             return hint
             
         rand_hint = try_random_hint() if self.game.hints > 0 else None
@@ -237,7 +232,6 @@ class Game:
     def play_or_fold(self, player_id, card_id, card, new_card, played):
         color, nominal = card
         if played:
-            sys.stderr.write('add to played color={} nominal={}'.format(color, nominal))
             self.played[color] = nominal
         else:
             self.discarded.append(card)
@@ -268,16 +262,21 @@ class Game:
         copy = [Possible(p) for p in self.players[player_to].possible]
         self.players[player_to].possible = copy
         self.hint(player_from, player_to, selected, hint)
-        
+
         score = 0
         for card, p_original, p_copy in zip(self.players[player_to].hand, original, copy):
             if card is not None:
                 # насколько уменьшится количество вариантов у противника
                 diff = len(p_original) - len(p_copy)
                 # +20 очков если противник сможет сыграть карту
+                may_play = all(self.played[card[0]] == card[1] - 1 for card in p_copy)
+                may_play_before = all(self.played[card[0]] == card[1] - 1 for card in p_original)
+                if may_play and not may_play_before:
+                    score += 50
                 bonus = 20.0 * (diff > 0) * sum(self.played[card[0]] == card[1] - 1 for card in p_copy)/len(p_copy) 
-                score += diff + bonus
-
+                score += bonus
+        
+        sys.stderr.write('try hint to {} cards {} {}: score {}\n'.format(player_to, selected, hint, score)) 
         self.players[player_to].possible = original
         return score
              

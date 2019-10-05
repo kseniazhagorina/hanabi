@@ -135,7 +135,13 @@ class Game:
             pinput = self.players[player].process.stdin
             pinput.write(status)
             pinput.flush()
+            
+        
+            cards = ['{} {}'.format(*card) if card else 'None' for card in self.players[player].hand]
+            player_hand = '{player} {cards}\n'.format(player=player, cards=' '.join(cards))
+            self.log.write(player_hand)
         self.log.write(status)
+        
             
     def read_command(self):
         command = []
